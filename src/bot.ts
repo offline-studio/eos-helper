@@ -38,6 +38,12 @@ export const createBot = (token: string, config?: BotConfig<BotContext> & {
   bot.command("start", async (ctx: BotContext) => {
     await ctx.conversation.exit();
 
+    const parameter = ctx.match;
+
+    if (typeof parameter === "string") {
+      ctx.session.promoCode = parameter.trim();
+    }
+
     await ctx.reply(welcomeMessage, {
       parse_mode: "MarkdownV2",
       reply_markup: InlineKeyboard.from([langButtons])
