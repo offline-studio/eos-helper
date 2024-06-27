@@ -12,6 +12,7 @@
   "devDependencies": {
     "@cloudflare/vitest-pool-workers": "^0.4.5",
     "@cloudflare/workers-types": "^4.20240620.0",
+    "@grammyjs/types": "^3.9.0",
     "dotenv": "^16.4.5",
     "socks-proxy-agent": "^8.0.3",
     "tsx": "^4.15.7",
@@ -20,7 +21,8 @@
     "wrangler": "^3.60.3"
   },
   "dependencies": {
-    "@grammyjs/conversations": "^1.2.0",
+    "@grammyjs/storage-cloudflare": "^2.4.2",
+    "@ponomarevlad/o-son": "1.0.1-web.1",
     "@wharfkit/antelope": "^1.0.8",
     "grammy": "^1.25.1"
   }

@@ -1,4 +1,4 @@
-import { Conversation } from "@grammyjs/conversations";
+import { Conversation } from "./lib/conversations";
 import { BotContext } from "./context";
 import { InlineKeyboard } from "grammy";
 import { PublicKey } from "@wharfkit/antelope";

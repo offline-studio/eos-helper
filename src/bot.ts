@@ -1,18 +1,21 @@
-import { Bot, BotConfig, InlineKeyboard, session } from "grammy";
+import { Bot, BotConfig, InlineKeyboard, StorageAdapter, session } from "grammy";
 import { welcomeMessage } from "./messages";
-import { conversations, createConversation } from "@grammyjs/conversations";
-import { BotContext } from "./context";
+import { conversations, createConversation } from "./lib/conversations";
+import { BotContext, SessionData } from "./context";
 import { claimFreeAccount } from "./conversation";
 
 const langs = [{ value: "en", label: "🇺🇸 English"}, { value: "zh", label: "🇨🇳 中文"}]
 
-export const createBot = (token: string, config?: BotConfig<BotContext>) => {
+export const createBot = (token: string, config?: BotConfig<BotContext> & {
+  sessionStorage?: StorageAdapter<SessionData>
+}) => {
   const bot = new Bot<BotContext>(token, config);
 
   bot.use(session({
     initial: () => ({
       lang: "en"
     }),
+    storage: config?.sessionStorage
   }));
 
   bot.use(conversations());

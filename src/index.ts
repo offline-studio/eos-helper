@@ -1,9 +1,11 @@
 import { webhookCallback } from "grammy";
 import { createBot } from "./bot";
+import { KvAdapter } from "@grammyjs/storage-cloudflare";
 
 export interface Env {
 	BOT_INFO: string;
 	BOT_TOKEN: string;
+	KV_SESSION: KVNamespace;
 }
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
@@ -21,7 +23,8 @@ export interface Env {
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const bot = createBot(env.BOT_TOKEN, {
-			botInfo: JSON.parse(env.BOT_INFO)
+			botInfo: JSON.parse(env.BOT_INFO),
+			sessionStorage: new KvAdapter(env.KV_SESSION),
 		});
 
 		return webhookCallback(bot, "cloudflare-mod")(request);

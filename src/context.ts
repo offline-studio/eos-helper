@@ -1,4 +1,4 @@
-import type { ConversationFlavor } from "@grammyjs/conversations";
+import type { ConversationFlavor } from "./lib/conversations";
 import type { Context, SessionFlavor } from "grammy";
 
 export type SessionData = {
