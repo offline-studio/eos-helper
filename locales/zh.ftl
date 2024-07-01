@@ -33,3 +33,4 @@ account_created =
 invalid_pubkey = 无效公钥，请重新输入
 
 account_claimed = 您已经领取过免费账号。每个Telegram用户只能领取一个免费EOS账号。
+account_failed = 账号创建失败，请稍后再试。

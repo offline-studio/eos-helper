@@ -80,30 +80,35 @@ export class ClaimFreeAccount {
     }
 
     await this.ctx.reply(this.ctx.t("account_creating"));
-    const txid = await this.createAccount(confirmedPublicKey);
 
-    if (txid) {
-      const now = Date.now().valueOf();
-      const promoCode = this.ctx.session.promoCode;
-      await this.claimRecords.set(fromUser.id.toString(), JSON.stringify({
-        promoCode,
-        txid,
-        publicKey: confirmedPublicKey,
-        time: now,
-        from: fromUser,
-      }));
+    try {
+      const txid = await this.createAccount(confirmedPublicKey);
 
-      if (promoCode) {
-        await this.claimRecords.set(`${promoCode}:${fromUser.id}`, JSON.stringify({
+      if (txid) {
+        const now = Date.now().valueOf();
+        const promoCode = this.ctx.session.promoCode;
+        await this.claimRecords.set(fromUser.id.toString(), JSON.stringify({
+          promoCode,
           txid,
+          publicKey: confirmedPublicKey,
           time: now,
+          from: fromUser,
         }));
-      }
-    }
 
-    await this.ctx.reply(this.ctx.t("account_created"), {
-      parse_mode: "MarkdownV2",
-    });
+        if (promoCode) {
+          await this.claimRecords.set(`${promoCode}:${fromUser.id}`, JSON.stringify({
+            txid,
+            time: now,
+          }));
+        }
+      }
+
+      await this.ctx.reply(this.ctx.t("account_created"), {
+        parse_mode: "MarkdownV2",
+      });
+    } catch (e) {
+      await this.ctx.reply(this.ctx.t("account_failed"));
+    }
   }
 
   async waitPublicKey() {
@@ -195,8 +200,11 @@ export class ClaimFreeAccount {
     }, abi);
 
     const result = await this.session.transact({ action });
+    if (!result.response) {
+      throw new Error("Transaction failed");
+    }
 
-    return result.response?.transaction_id;
+    return result.response.transaction_id;
   }
 
   validatePublicKey(publicKey: string) {
