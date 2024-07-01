@@ -17,6 +17,12 @@ importers:
       '@wharfkit/antelope':
         specifier: ^1.0.8
         version: 1.0.8
+      '@wharfkit/session':
+        specifier: ^1.3.1
+        version: 1.3.1
+      '@wharfkit/wallet-plugin-privatekey':
+        specifier: ^1.1.0
+        version: 1.1.0(@wharfkit/session@1.3.1)
       grammy:
         specifier: ^1.25.1
         version: 1.25.1
@@ -513,8 +519,39 @@ packages:
   '@vitest/utils@1.5.0':
     resolution: {integrity: sha512-BDU0GNL8MWkRkSRdNFvCUCAVOeHaUlVJ9Tx0TYBZyXaaOTmGtUFObzchCivIBrIwKzvZA7A9sCejVhXM2aY98A==}
 
+  '@wharfkit/abicache@1.2.2':
+    resolution: {integrity: sha512-yOsYz2qQpQy7Nb8XZj62pZqp8YnmWDqFlrenYksBb9jl+1aWIpFhWd+14VEez4tUAezRH4UWW+w1SX5vhmUY9A==}
+
+  '@wharfkit/account@1.1.1':
+    resolution: {integrity: sha512-487SJwAR1hw80Xz5EJTSnBAwME1fHa35obIoStH1k/fXp8MsBgvnM1/xvCS/LNC7N7fFCIUeaYO4Qv4SitM5Fw==}
+
   '@wharfkit/antelope@1.0.8':
     resolution: {integrity: sha512-RMpSHv5LteQtxiNlunLAwlaAGz4Gq4SErlyN1mVbqly14UB3GA1jRlosEZUGkCy7DdYDuY1tIFlAJJ+2lXeZIA==}
+
+  '@wharfkit/common@1.2.2':
+    resolution: {integrity: sha512-VdhSBlAd2zU4fzvlB5CKje75SfFAD3zbj0n7uxAa8bjclXyRCjyvRzxCXSKb5WbKMiQ8EN3kS2iLAhSBy4TJxw==}
+    peerDependencies:
+      '@wharfkit/antelope': ^1.0.0
+
+  '@wharfkit/contract@1.1.5':
+    resolution: {integrity: sha512-I4w2QFvD/zb4uj5z0U4uQJLRCiZEbrT+AJ9/5goGm6SU42fsRud/k55qSBzW8Ij00OAv2h1+e8rR7xzUruXC9g==}
+
+  '@wharfkit/resources@1.2.3':
+    resolution: {integrity: sha512-uOf52gdpxfIWOlo0Z/kdMPMpyVk9Rnb9f6O/FACm/VQ13xykrR4AoZGhUnejft2S7RcqVWLjb9oqpOxhDOywBg==}
+
+  '@wharfkit/session@1.3.1':
+    resolution: {integrity: sha512-x+SV14arfhvuiDGyWAH2WIKW7v2WKQ1njc3EzU5ZzE6xVWRfKZ23mqtz83YemQ2h0562+QR712CzX5ZhAcdcpg==}
+
+  '@wharfkit/signing-request@3.2.0':
+    resolution: {integrity: sha512-rIMzqwAKA5vb09+1BI+9fUXbj73JIkYcD1XT/Tom+k/+bqi51JcmC0trjCOjTUOK9UYDabpxYFixrf1ZvQymKw==}
+
+  '@wharfkit/token@1.1.2':
+    resolution: {integrity: sha512-LYAGB7LnE3hxwjNsYYwpxbJ8APi0Y8pmh7i1SeKv13HaPVjuHisTnuPxJm3ndwU7pX9GT3hPyo/By0l3CEuLfw==}
+
+  '@wharfkit/wallet-plugin-privatekey@1.1.0':
+    resolution: {integrity: sha512-45LPj7AOVDm4RugDEhy0fnQX/BcMffeJPjGUCUrLazJ2S0Sti8nNk4nqiJqyme84c/0gq7d65vvwlmVfGtPVEg==}
+    peerDependencies:
+      '@wharfkit/session': ^1.1.0
 
   abort-controller@3.0.0:
     resolution: {integrity: sha512-h8lQ8tacZYnR3vNQTgibj+tODHI5/+l06Au2Pcriv/Gmet0eaj4TwWH41sO9wnHDiQsEj19q0drzdWdeAHtweg==}
@@ -754,6 +791,9 @@ packages:
 
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
+
+  js-big-decimal@2.0.7:
+    resolution: {integrity: sha512-XGc79t2Iv3b7LFlYaTT8WoQBuWL4K81aST+dq2YGHV6giedbnoG0s33ju24Uw/BGqLYfPPgn4HGRrPS2mfKk3Q==}
 
   js-tokens@9.0.0:
     resolution: {integrity: sha512-WriZw1luRMlmV3LGJaR6QOJjWwgLUTf89OwT2lUOyjX2dJGBwgmIkbcz+7WFZjrZM635JOIR517++e/67CP9dQ==}
@@ -1459,6 +1499,22 @@ snapshots:
       loupe: 2.3.7
       pretty-format: 29.7.0
 
+  '@wharfkit/abicache@1.2.2':
+    dependencies:
+      '@wharfkit/antelope': 1.0.8
+      '@wharfkit/signing-request': 3.2.0
+      pako: 2.1.0
+      tslib: 2.6.3
+
+  '@wharfkit/account@1.1.1':
+    dependencies:
+      '@wharfkit/antelope': 1.0.8
+      '@wharfkit/common': 1.2.2(@wharfkit/antelope@1.0.8)
+      '@wharfkit/contract': 1.1.5
+      '@wharfkit/resources': 1.2.3
+      '@wharfkit/token': 1.1.2
+      tslib: 2.6.3
+
   '@wharfkit/antelope@1.0.8':
     dependencies:
       bn.js: 4.12.0
@@ -1466,6 +1522,52 @@ snapshots:
       elliptic: 6.5.5
       hash.js: 1.1.7
       pako: 2.1.0
+      tslib: 2.6.3
+
+  '@wharfkit/common@1.2.2(@wharfkit/antelope@1.0.8)':
+    dependencies:
+      '@wharfkit/antelope': 1.0.8
+      tslib: 2.6.3
+
+  '@wharfkit/contract@1.1.5':
+    dependencies:
+      '@wharfkit/abicache': 1.2.2
+      '@wharfkit/antelope': 1.0.8
+      '@wharfkit/signing-request': 3.2.0
+      tslib: 2.6.3
+
+  '@wharfkit/resources@1.2.3':
+    dependencies:
+      '@wharfkit/antelope': 1.0.8
+      bn.js: 4.12.0
+      js-big-decimal: 2.0.7
+      tslib: 2.6.3
+
+  '@wharfkit/session@1.3.1':
+    dependencies:
+      '@wharfkit/abicache': 1.2.2
+      '@wharfkit/account': 1.1.1
+      '@wharfkit/antelope': 1.0.8
+      '@wharfkit/common': 1.2.2(@wharfkit/antelope@1.0.8)
+      '@wharfkit/signing-request': 3.2.0
+      pako: 2.1.0
+      tslib: 2.6.3
+
+  '@wharfkit/signing-request@3.2.0':
+    dependencies:
+      '@wharfkit/antelope': 1.0.8
+      tslib: 2.6.3
+
+  '@wharfkit/token@1.1.2':
+    dependencies:
+      '@wharfkit/antelope': 1.0.8
+      '@wharfkit/contract': 1.1.5
+      bn.js: 4.12.0
+      tslib: 2.6.3
+
+  '@wharfkit/wallet-plugin-privatekey@1.1.0(@wharfkit/session@1.3.1)':
+    dependencies:
+      '@wharfkit/session': 1.3.1
       tslib: 2.6.3
 
   abort-controller@3.0.0:
@@ -1746,6 +1848,8 @@ snapshots:
   is-stream@3.0.0: {}
 
   isexe@2.0.0: {}
+
+  js-big-decimal@2.0.7: {}
 
   js-tokens@9.0.0: {}
 

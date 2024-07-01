@@ -6,6 +6,12 @@ export interface Env {
 	BOT_INFO: string;
 	BOT_TOKEN: string;
 	KV_SESSION: KVNamespace;
+
+	CHAIN_ID: string;
+	CHAIN_API_URL: string;
+	CREATOR: string;
+	CONTRACT: string;
+	PRIVATE_KEY: string;
 }
 /**
  * Welcome to Cloudflare Workers! This is your first worker.
@@ -23,8 +29,15 @@ export interface Env {
 export default {
 	async fetch(request, env, ctx): Promise<Response> {
 		const bot = createBot(env.BOT_TOKEN, {
-			botInfo: JSON.parse(env.BOT_INFO),
+			botConfig: {
+				botInfo: JSON.parse(env.BOT_INFO),
+			},
 			sessionStorage: new KvAdapter(env.KV_SESSION),
+			creator: env.CREATOR,
+			chainId: env.CHAIN_ID,
+			chainApiUrl: env.CHAIN_API_URL,
+			contract: env.CONTRACT,
+			privateKey: env.PRIVATE_KEY,
 		});
 
 		return webhookCallback(bot, "cloudflare-mod")(request);

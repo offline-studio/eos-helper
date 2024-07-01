@@ -27,6 +27,9 @@ BOT_INFO = """{
     "supports_inline_queries": false,
     "can_connect_to_business": false
 }"""
+CHAIN_ID = "aca376f206b8fc25a6ed44dbdc66547c36c6c33e3a119ffbeaef943642f0e906"
+CHAIN_API_URL = "https://eos.greymass.com"
+CONTRACT = "msig.recover"
 
 # Bind the Workers AI model catalog. Run machine learning models, powered by serverless GPUs, on Cloudflare’s global network
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#workers-ai

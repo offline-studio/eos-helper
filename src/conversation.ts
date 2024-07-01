@@ -1,7 +1,10 @@
 import { Conversation } from "./lib/conversations";
 import { BotContext } from "./context";
 import { InlineKeyboard } from "grammy";
-import { PublicKey } from "@wharfkit/antelope";
+import { ABI, Action, PublicKey } from "@wharfkit/antelope";
+import EOSIOAbi from "./contracts/eosio.json";
+import { Session } from "@wharfkit/session"
+import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey"
 
 const requestPublicKeyMessage = `Please enter a public key for your account\\.
 You can generate keypair by the offline webapp below:
@@ -20,15 +23,46 @@ Make sure you have backed up the corresponding private key\\.
 
 If you need to use other public keys, please enter directly\\.`
 
-const accountCreatedMessage = (account: string) => `Account created successfully: \`${account}\``;
+const accountCreatedMessage = `Account created successfully\\. Please import your Private Key to an EOS wallet\\. Such as [TokenPocket](https://www.tokenpocket.pro/en/download/app)\\.`;
 
-class ClaimFreeAccount {
+export interface ClaimFreeAccountOptions {
+  creator: string;
+  chainId: string;
+  chainApiUrl: string;
+  contract: string;
+  privateKey: string;
+}
+
+export class ClaimFreeAccount {
   conversation: Conversation<BotContext>;
   ctx: BotContext;
 
-  constructor(conversation: Conversation<BotContext>, ctx: BotContext) {
+  contract: string;
+  session: Session;
+
+  constructor(conversation: Conversation<BotContext>, ctx: BotContext, {
+    creator,
+    chainId,
+    chainApiUrl,
+    contract,
+    privateKey,
+  }: ClaimFreeAccountOptions) {
     this.conversation = conversation;
     this.ctx = ctx;
+
+    this.contract = contract;
+    
+
+    const walletPlugin = new WalletPluginPrivateKey(privateKey);
+    this.session = new Session({
+      actor: creator,
+      permission: "active",
+      chain: {
+        id: chainId,
+        url: chainApiUrl,
+      },
+      walletPlugin,
+    });
   }
 
   async start() {
@@ -40,16 +74,19 @@ class ClaimFreeAccount {
     const publicKey = await this.waitPublicKey();
     if (!publicKey) return;
 
-    const confirmed = await this.confirmPublicKey(publicKey);
+    const confirmedPublicKey = await this.confirmPublicKey(publicKey);
     
-    if (!confirmed) {
+    if (!confirmedPublicKey) {
       await this.ctx.reply("Account creation cancelled");
       return;
     }
 
     await this.ctx.reply("Creating account...");
-    const account = await this.createAccount(publicKey);
-    await this.ctx.reply(accountCreatedMessage(account), {
+    const txid = await this.createAccount(confirmedPublicKey);
+
+    console.log("txid", txid);
+
+    await this.ctx.reply(accountCreatedMessage, {
       parse_mode: "MarkdownV2",
     });
   }
@@ -77,7 +114,7 @@ class ClaimFreeAccount {
     return text.startsWith("/");
   }
 
-  async confirmPublicKey(publicKey: string): Promise<boolean> {
+  async confirmPublicKey(publicKey: string): Promise<false | string> {
     await this.ctx.reply(publicKeyConfirmMessage(publicKey), {
       reply_markup: InlineKeyboard.from([[confirmButton], [cancelButton]]),
       parse_mode: "MarkdownV2",
@@ -86,7 +123,12 @@ class ClaimFreeAccount {
     do {
       let confirmedOrPublicKey = await this.waitConfirmOrNewPublicKey();
 
-      if (typeof confirmedOrPublicKey === "boolean") return confirmedOrPublicKey;
+      if (typeof confirmedOrPublicKey === "boolean") {
+        if (confirmedOrPublicKey) {
+          return publicKey;
+        }
+        return false;
+      }
 
       if (confirmedOrPublicKey && this.validatePublicKey(confirmedOrPublicKey)) {
         return await this.confirmPublicKey(confirmedOrPublicKey);
@@ -116,8 +158,25 @@ class ClaimFreeAccount {
   }
 
   async createAccount(publicKey: string): Promise<string> {
-    // TODO: create account
-    return "x1sdascvsdqw";
+    const abi = ABI.from(EOSIOAbi);
+
+    const action = Action.from({
+      authorization: [
+        this.session.permissionLevel
+      ],
+      account: "eosio",
+      name: "ramtransfer",
+      data: {
+        from: this.session.actor,
+        to: this.contract,
+        bytes: 1536,
+        memo: `buy-${publicKey}`
+      }
+    }, abi);
+
+    const result = await this.session.transact({ action });
+
+    return result.response?.transaction_id;
   }
 
   validatePublicKey(publicKey: string) {
@@ -129,10 +188,4 @@ class ClaimFreeAccount {
     }
   }
 
-}
-
-export const claimFreeAccount = async (conversation: Conversation<BotContext>, ctx: BotContext) => {
-  const claimFreeAccount = new ClaimFreeAccount(conversation, ctx);
-  await claimFreeAccount.start();
-  return;
 }

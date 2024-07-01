@@ -1,24 +1,31 @@
 import { Bot, BotConfig, InlineKeyboard, StorageAdapter, session } from "grammy";
 import { welcomeMessage } from "./messages";
-import { conversations, createConversation } from "./lib/conversations";
+import { Conversation, conversations, createConversation } from "./lib/conversations";
 import { BotContext, SessionData } from "./context";
-import { claimFreeAccount } from "./conversation";
+import { ClaimFreeAccount, ClaimFreeAccountOptions } from "./conversation";
 
 const langs = [{ value: "en", label: "🇺🇸 English"}, { value: "zh", label: "🇨🇳 中文"}]
 
-export const createBot = (token: string, config?: BotConfig<BotContext> & {
-  sessionStorage?: StorageAdapter<SessionData>
-}) => {
-  const bot = new Bot<BotContext>(token, config);
+export const createBot = (token: string, { botConfig, sessionStorage, ...claimFreeAccountOptions }: {
+  botConfig: BotConfig<BotContext>,
+  sessionStorage?: StorageAdapter<SessionData>,
+} & ClaimFreeAccountOptions) => {
+  const bot = new Bot<BotContext>(token, botConfig);
 
   bot.use(session({
     initial: () => ({
       lang: "en"
     }),
-    storage: config?.sessionStorage
+    storage: sessionStorage
   }));
 
   bot.use(conversations());
+
+  const claimFreeAccount = async (conversation: Conversation<BotContext>, ctx: BotContext) => {
+    const claimFreeAccount = new ClaimFreeAccount(conversation, ctx, claimFreeAccountOptions);
+    await claimFreeAccount.start();
+    return;
+  }
 
   bot.use(createConversation(claimFreeAccount));
 
