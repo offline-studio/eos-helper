@@ -1,11 +1,13 @@
 import { Conversation } from "./lib/conversations";
 import { BotContext } from "./context";
 import { InlineKeyboard } from "grammy";
-import { ABI, Action, PublicKey } from "@wharfkit/antelope";
-import EOSIOAbi from "./contracts/eosio.json";
-import { Session } from "@wharfkit/session"
-import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey"
+import { PublicKey } from "@wharfkit/antelope";
 import { KVStorage } from "./kvstorage";
+import { Api, JsonRpc } from 'enf-eosjs';
+import { JsSignatureProvider } from 'enf-eosjs/dist/eosjs-jssig'; 
+import { Buffer } from "node:buffer";
+
+globalThis.Buffer = Buffer;
 
 export interface ClaimFreeAccountOptions {
   creator: string;
@@ -18,8 +20,9 @@ export interface ClaimFreeAccountOptions {
 
 export class ClaimFreeAccount {
   contract: string;
-  session: Session;
   claimRecords: KVStorage;
+  api: Api;
+  creator: string;
 
   constructor({
     creator,
@@ -32,18 +35,25 @@ export class ClaimFreeAccount {
     this.contract = contract;
     this.claimRecords = claimRecords;
 
-    const walletPlugin = new WalletPluginPrivateKey(privateKey);
-    this.session = new Session({
-      actor: creator,
-      permission: "active",
-      chain: {
-        id: chainId,
-        url: chainApiUrl,
-      },
-      walletPlugin,
-    }, {
-      fetch,
+    // const walletPlugin = new WalletPluginPrivateKey(privateKey);
+
+    this.api = new Api({
+      rpc: new JsonRpc(chainApiUrl, { fetch: fetch as any }),
+      signatureProvider: new JsSignatureProvider([privateKey]),
     });
+    this.creator = creator;
+
+    // this.session = new Session({
+    //   actor: creator,
+    //   permission: "active",
+    //   chain: {
+    //     id: chainId,
+    //     url: chainApiUrl,
+    //   },
+    //   walletPlugin,
+    // }, {
+    //   fetch,
+    // });
   }
 
   async start(conversation: Conversation<BotContext>, ctx: BotContext) {
@@ -180,28 +190,31 @@ export class ClaimFreeAccount {
   }
 
   async createAccount(publicKey: string): Promise<string> {
-    const abi = ABI.from(EOSIOAbi);
-
-    const action = Action.from({
+    const action = {
       authorization: [
-        this.session.permissionLevel
+        {
+          actor: this.creator,
+          permission: 'active',
+        }
       ],
       account: "eosio",
       name: "ramtransfer",
       data: {
-        from: this.session.actor,
+        from: this.creator,
         to: this.contract,
         bytes: 1536,
         memo: `buy-${publicKey}`
       }
-    }, abi);
+    };
 
-    const result = await this.session.transact({ action });
-    if (!result.response) {
-      throw new Error("Transaction failed");
-    }
+    const resp = await this.api.transact({
+      actions: [action],
+    }, {
+      blocksBehind: 3,
+      expireSeconds: 30
+    });
 
-    return result.response.transaction_id;
+    return resp.transaction_id;
   }
 
   validatePublicKey(publicKey: string) {
