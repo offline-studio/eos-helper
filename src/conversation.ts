@@ -5,6 +5,7 @@ import { ABI, Action, PublicKey } from "@wharfkit/antelope";
 import EOSIOAbi from "./contracts/eosio.json";
 import { Session } from "@wharfkit/session"
 import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey"
+import { KVStorage } from "./kvstorage";
 
 export interface ClaimFreeAccountOptions {
   creator: string;
@@ -12,6 +13,7 @@ export interface ClaimFreeAccountOptions {
   chainApiUrl: string;
   contract: string;
   privateKey: string;
+  claimRecords: KVStorage;
 }
 
 export class ClaimFreeAccount {
@@ -20,6 +22,7 @@ export class ClaimFreeAccount {
 
   contract: string;
   session: Session;
+  claimRecords: KVStorage;
 
   constructor(conversation: Conversation<BotContext>, ctx: BotContext, {
     creator,
@@ -27,12 +30,13 @@ export class ClaimFreeAccount {
     chainApiUrl,
     contract,
     privateKey,
+    claimRecords  
   }: ClaimFreeAccountOptions) {
     this.conversation = conversation;
     this.ctx = ctx;
 
     this.contract = contract;
-    
+    this.claimRecords = claimRecords;
 
     const walletPlugin = new WalletPluginPrivateKey(privateKey);
     this.session = new Session({
@@ -47,7 +51,17 @@ export class ClaimFreeAccount {
   }
 
   async start() {
-    const lang = await this.ctx.i18n.getLocale();
+    const fromUser = this.ctx.from;
+    if (!fromUser) return;
+
+    const claimRecord = await this.claimRecords.get(fromUser.id.toString());
+    if (claimRecord) {
+      await this.ctx.reply(this.ctx.t("account_claimed"));
+      return;
+    }
+
+    const lang = this.ctx.session.__language_code;
+
     const openKeypairGeneratorButton = InlineKeyboard.webApp(this.ctx.t("generate_keypair"), `https://eos-keypair.pages.dev?lang=${lang}`);
 
     await this.ctx.reply(this.ctx.t("request_pubkey"), {
@@ -68,7 +82,24 @@ export class ClaimFreeAccount {
     await this.ctx.reply(this.ctx.t("account_creating"));
     const txid = await this.createAccount(confirmedPublicKey);
 
-    console.log("txid", txid);
+    if (txid) {
+      const now = Date.now().valueOf();
+      const promoCode = this.ctx.session.promoCode;
+      await this.claimRecords.set(fromUser.id.toString(), JSON.stringify({
+        promoCode,
+        txid,
+        publicKey: confirmedPublicKey,
+        time: now,
+        from: fromUser,
+      }));
+
+      if (promoCode) {
+        await this.claimRecords.set(`${promoCode}:${fromUser.id}`, JSON.stringify({
+          txid,
+          time: now,
+        }));
+      }
+    }
 
     await this.ctx.reply(this.ctx.t("account_created"), {
       parse_mode: "MarkdownV2",

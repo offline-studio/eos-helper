@@ -31,3 +31,5 @@ account_created =
   Please import your Private Key to an EOS wallet\. Such as [TokenPocket](https://www.tokenpocket.pro/en/download/app)\.
 
 invalid_pubkey = Invalid public key, please enter again
+
+account_claimed = You have already claimed a free account. Each Telegram account can only claim one free account.

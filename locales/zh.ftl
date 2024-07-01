@@ -31,3 +31,5 @@ account_created =
   请将您的私钥导入到 EOS 钱包中。例如 [TokenPocket](https://www.tokenpocket.pro/en/download/app)。
 
 invalid_pubkey = 无效公钥，请重新输入
+
+account_claimed = 您已经领取过免费账号。每个Telegram用户只能领取一个免费EOS账号。
