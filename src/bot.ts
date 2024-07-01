@@ -1,4 +1,4 @@
-import { Bot, BotConfig, InlineKeyboard, StorageAdapter, session } from "grammy";
+import { Bot, BotConfig, GrammyError, HttpError, InlineKeyboard, StorageAdapter, session } from "grammy";
 import { Conversation, conversations, createConversation } from "./lib/conversations";
 import { BotContext, SessionData } from "./context";
 import { ClaimFreeAccount, ClaimFreeAccountOptions } from "./conversation";
@@ -77,6 +77,19 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
 
     await ctx.conversation.enter("claimFreeAccount");
   });
+
+  bot.catch((err) => {
+    const ctx = err.ctx;
+    console.error(`Error while handling update ${ctx.update.update_id}:`);
+    const e = err.error;
+    if (e instanceof GrammyError) {
+      console.error("Error in request:", e.description);
+    } else if (e instanceof HttpError) {
+      console.error("Could not contact Telegram:", e);
+    } else {
+      console.error("Unknown error:", e);
+    }
+  })
 
   return bot
 }

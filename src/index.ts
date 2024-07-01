@@ -1,11 +1,13 @@
 import { webhookCallback } from "grammy";
 import { createBot } from "./bot";
 import { KvAdapter } from "@grammyjs/storage-cloudflare";
+import { CloudflareKV } from "./kvstorage";
 
 export interface Env {
 	BOT_INFO: string;
 	BOT_TOKEN: string;
 	KV_SESSION: KVNamespace;
+	CLAIM_RECORDS: KVNamespace;
 
 	CHAIN_ID: string;
 	CHAIN_API_URL: string;
@@ -38,6 +40,7 @@ export default {
 			chainApiUrl: env.CHAIN_API_URL,
 			contract: env.CONTRACT,
 			privateKey: env.PRIVATE_KEY,
+			claimRecords: new CloudflareKV(env.CLAIM_RECORDS),
 		});
 
 		return webhookCallback(bot, "cloudflare-mod")(request);

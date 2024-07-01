@@ -84,6 +84,10 @@ CONTRACT = "msig.recover"
 binding = "KV_SESSION"
 id = "073daafffb6d459ba675ea294f939ca7"
 
+[[kv_namespaces]]
+binding = "CLAIM_RECORDS"
+id = "bdd52a503a0145d799df7c6e9ffde30a"
+
 # Bind an mTLS certificate. Use to present a client certificate when communicating with another service.
 # Docs: https://developers.cloudflare.com/workers/wrangler/configuration/#mtls-certificates
 # [[mtls_certificates]]
