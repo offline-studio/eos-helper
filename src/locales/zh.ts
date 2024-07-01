@@ -1,8 +1,9 @@
+export const zh = `
 welcome = 
   欢迎，我是 EOS 助手！我可以帮助您创建和管理 EOS 帐户。
   您可以使用以下命令：
 
-  /free\_account \- 领取免费 EOS 帐户
+  /free\\_account \\- 领取免费 EOS 帐户
 
 language_set = 语言已切换至 { $lang }
 
@@ -15,7 +16,7 @@ generate_keypair = 生成密钥对
 confirm_pubkey =
   用以下公钥创建免费账号：
 
-  `{ $pubkey }`
+  \`{ $pubkey }\`
 
   请确保已备份相应的私钥。
 
@@ -34,3 +35,4 @@ invalid_pubkey = 无效公钥，请重新输入
 
 account_claimed = 您已经领取过免费账号。每个Telegram用户只能领取一个免费EOS账号。
 account_failed = 账号创建失败，请稍后再试。
+`

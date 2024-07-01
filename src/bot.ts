@@ -2,7 +2,9 @@ import { Bot, BotConfig, GrammyError, HttpError, InlineKeyboard, StorageAdapter,
 import { Conversation, conversations, createConversation } from "./lib/conversations";
 import { BotContext, SessionData } from "./context";
 import { ClaimFreeAccount, ClaimFreeAccountOptions } from "./conversation";
-import { I18n } from "@grammyjs/i18n";
+import { I18n, TranslationVariables } from "./lib/i18n";
+import { en } from "./locales/en";
+import { zh } from "./locales/zh";
 
 const langs = [{ value: "en", label: "🇺🇸 English"}, { value: "zh", label: "🇨🇳 中文"}]
 
@@ -15,7 +17,13 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
   const i18n = new I18n<BotContext>({
     defaultLocale: "en",
     useSession: true,
-    directory: "locales"
+  });
+
+  i18n.loadLocaleSync("en", {
+    source: en,
+  });
+  i18n.loadLocaleSync("zh", {
+    source: zh,
   });
 
   bot.use(session({
@@ -27,9 +35,17 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
 
   bot.use(conversations());
 
+  const claimFreeAccountConversation = new ClaimFreeAccount(claimFreeAccountOptions);
+
   const claimFreeAccount = async (conversation: Conversation<BotContext>, ctx: BotContext) => {
-    const claimFreeAccount = new ClaimFreeAccount(conversation, ctx, claimFreeAccountOptions);
-    await claimFreeAccount.start();
+    ctx.t = <K extends string>(
+      key: string,
+      translationVariables?: TranslationVariables<K>,
+    ): string => {
+      return i18n.translate(ctx.session.__language_code || "en", key, translationVariables);
+    }
+    
+    await claimFreeAccountConversation.start(conversation, ctx);
     return;
   }
 

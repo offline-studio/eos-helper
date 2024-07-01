@@ -17,14 +17,11 @@ export interface ClaimFreeAccountOptions {
 }
 
 export class ClaimFreeAccount {
-  conversation: Conversation<BotContext>;
-  ctx: BotContext;
-
   contract: string;
   session: Session;
   claimRecords: KVStorage;
 
-  constructor(conversation: Conversation<BotContext>, ctx: BotContext, {
+  constructor({
     creator,
     chainId,
     chainApiUrl,
@@ -32,9 +29,6 @@ export class ClaimFreeAccount {
     privateKey,
     claimRecords  
   }: ClaimFreeAccountOptions) {
-    this.conversation = conversation;
-    this.ctx = ctx;
-
     this.contract = contract;
     this.claimRecords = claimRecords;
 
@@ -47,46 +41,48 @@ export class ClaimFreeAccount {
         url: chainApiUrl,
       },
       walletPlugin,
+    }, {
+      fetch,
     });
   }
 
-  async start() {
-    const fromUser = this.ctx.from;
+  async start(conversation: Conversation<BotContext>, ctx: BotContext) {
+    const fromUser = ctx.from;
     if (!fromUser) return;
 
     const claimRecord = await this.claimRecords.get(fromUser.id.toString());
     if (claimRecord) {
-      await this.ctx.reply(this.ctx.t("account_claimed"));
+      await ctx.reply(ctx.t("account_claimed"));
       return;
     }
 
-    const lang = this.ctx.session.__language_code;
+    const lang = ctx.session.__language_code;
 
-    const openKeypairGeneratorButton = InlineKeyboard.webApp(this.ctx.t("generate_keypair"), `https://eos-keypair.pages.dev?lang=${lang}`);
+    const openKeypairGeneratorButton = InlineKeyboard.webApp(ctx.t("generate_keypair"), `https://eos-keypair.pages.dev?lang=${lang}`);
 
-    await this.ctx.reply(this.ctx.t("request_pubkey"), {
+    await ctx.reply(ctx.t("request_pubkey"), {
       reply_markup: InlineKeyboard.from([[openKeypairGeneratorButton]]),
       parse_mode: "MarkdownV2",
     });
 
-    const publicKey = await this.waitPublicKey();
+    const publicKey = await this.waitPublicKey(conversation, ctx);
     if (!publicKey) return;
 
-    const confirmedPublicKey = await this.confirmPublicKey(publicKey);
+    const confirmedPublicKey = await this.confirmPublicKey(conversation, ctx, publicKey.trim());
     
     if (!confirmedPublicKey) {
-      await this.ctx.reply(this.ctx.t("account_cancelled"));
+      await ctx.reply(ctx.t("account_cancelled"));
       return;
     }
 
-    await this.ctx.reply(this.ctx.t("account_creating"));
+    await ctx.reply(ctx.t("account_creating"));
 
     try {
       const txid = await this.createAccount(confirmedPublicKey);
 
       if (txid) {
         const now = Date.now().valueOf();
-        const promoCode = this.ctx.session.promoCode;
+        const promoCode = ctx.session.promoCode;
         await this.claimRecords.set(fromUser.id.toString(), JSON.stringify({
           promoCode,
           txid,
@@ -103,17 +99,18 @@ export class ClaimFreeAccount {
         }
       }
 
-      await this.ctx.reply(this.ctx.t("account_created"), {
+      await ctx.reply(ctx.t("account_created"), {
         parse_mode: "MarkdownV2",
       });
     } catch (e) {
-      await this.ctx.reply(this.ctx.t("account_failed"));
+      console.log("Error creating account", e);
+      await ctx.reply(ctx.t("account_failed"));
     }
   }
 
-  async waitPublicKey() {
+  async waitPublicKey(conversation: Conversation<BotContext>, ctx: BotContext) {
     do {
-      const publicKeyCtx = await this.conversation.wait();
+      const publicKeyCtx = await conversation.wait();
 
       let publicKey = publicKeyCtx.message?.text;
       if (publicKey && this.validatePublicKey(publicKey)) {
@@ -125,7 +122,7 @@ export class ClaimFreeAccount {
           return;
         }
 
-        await this.ctx.reply(this.ctx.t("invalid_pubkey"));
+        await ctx.reply(ctx.t("invalid_pubkey"));
       }
     } while (true);
   }
@@ -134,11 +131,11 @@ export class ClaimFreeAccount {
     return text.startsWith("/");
   }
 
-  async confirmPublicKey(publicKey: string): Promise<false | string> {
-    const confirmButton = InlineKeyboard.text(this.ctx.t("create_account"), "confirm");
-    const cancelButton = InlineKeyboard.text(this.ctx.t("cancel"), "cancel");
+  async confirmPublicKey(conversation: Conversation<BotContext>, ctx: BotContext, publicKey: string): Promise<false | string> {
+    const confirmButton = InlineKeyboard.text(ctx.t("create_account"), "confirm");
+    const cancelButton = InlineKeyboard.text(ctx.t("cancel"), "cancel");
 
-    await this.ctx.reply(this.ctx.t("confirm_pubkey", {
+    await ctx.reply(ctx.t("confirm_pubkey", {
       pubkey: publicKey
     }), {
       reply_markup: InlineKeyboard.from([[confirmButton], [cancelButton]]),
@@ -146,7 +143,7 @@ export class ClaimFreeAccount {
     });
 
     do {
-      let confirmedOrPublicKey = await this.waitConfirmOrNewPublicKey();
+      let confirmedOrPublicKey = await this.waitConfirmOrNewPublicKey(conversation);
 
       if (typeof confirmedOrPublicKey === "boolean") {
         if (confirmedOrPublicKey) {
@@ -156,20 +153,20 @@ export class ClaimFreeAccount {
       }
 
       if (confirmedOrPublicKey && this.validatePublicKey(confirmedOrPublicKey)) {
-        return await this.confirmPublicKey(confirmedOrPublicKey);
+        return await this.confirmPublicKey(conversation, ctx, confirmedOrPublicKey);
       }
 
       if (confirmedOrPublicKey) {
         if (this.isCommand(confirmedOrPublicKey)) {
           return false;
         }
-        await this.ctx.reply(this.ctx.t("invalid_pubkey"));
+        await ctx.reply(ctx.t("invalid_pubkey"));
       }
     } while (true);
   }
 
-  async waitConfirmOrNewPublicKey(): Promise<boolean | string | undefined>{
-    const confirmCtx = await this.conversation.wait();
+  async waitConfirmOrNewPublicKey(conversation: Conversation<BotContext>): Promise<boolean | string | undefined>{
+    const confirmCtx = await conversation.wait();
 
     if (confirmCtx.update.callback_query?.data === "confirm") {
       return true;
@@ -179,7 +176,7 @@ export class ClaimFreeAccount {
       return false;
     }
 
-    return confirmCtx.message?.text;
+    return confirmCtx.message?.text?.trim();
   }
 
   async createAccount(publicKey: string): Promise<string> {

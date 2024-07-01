@@ -1,4 +1,4 @@
-import { I18nFlavor } from "@grammyjs/i18n";
+import { I18nFlavor } from "./lib/i18n";
 import type { ConversationFlavor } from "./lib/conversations";
 import type { Context, SessionFlavor } from "grammy";
 
