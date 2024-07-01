@@ -21,6 +21,7 @@
     "wrangler": "^3.60.3"
   },
   "dependencies": {
+    "@grammyjs/i18n": "^1.0.2",
     "@grammyjs/storage-cloudflare": "^2.4.2",
     "@ponomarevlad/o-son": "1.0.1-web.1",
     "@wharfkit/antelope": "^1.0.8",

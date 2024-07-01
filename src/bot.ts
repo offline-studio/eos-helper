@@ -1,8 +1,8 @@
 import { Bot, BotConfig, InlineKeyboard, StorageAdapter, session } from "grammy";
-import { welcomeMessage } from "./messages";
 import { Conversation, conversations, createConversation } from "./lib/conversations";
 import { BotContext, SessionData } from "./context";
 import { ClaimFreeAccount, ClaimFreeAccountOptions } from "./conversation";
+import { I18n } from "@grammyjs/i18n";
 
 const langs = [{ value: "en", label: "🇺🇸 English"}, { value: "zh", label: "🇨🇳 中文"}]
 
@@ -12,12 +12,18 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
 } & ClaimFreeAccountOptions) => {
   const bot = new Bot<BotContext>(token, botConfig);
 
+  const i18n = new I18n<BotContext>({
+    defaultLocale: "en",
+    useSession: true,
+    directory: "locales"
+  });
+
   bot.use(session({
-    initial: () => ({
-      lang: "en"
-    }),
+    initial: () => ({}),
     storage: sessionStorage
   }));
+
+  bot.use(i18n);
 
   bot.use(conversations());
 
@@ -36,8 +42,17 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
 
   langs.forEach(({ label, value }) => {
     bot.callbackQuery(`lang-${value}`, async (ctx: BotContext) => {
-      ctx.session.lang = value;
-      await ctx.answerCallbackQuery({ text: `Language set to ${label}` });
+      const currentLocale = await ctx.i18n.getLocale();
+      if (currentLocale === value) {
+        return;
+      }
+
+      ctx.i18n.setLocale(value);
+      await ctx.answerCallbackQuery({ text: ctx.t("language_set", { lang: label }) });
+      await ctx.editMessageText(ctx.t("welcome"), {
+        parse_mode: "MarkdownV2",
+        reply_markup: InlineKeyboard.from([langButtons])
+      });
     });
   })
  
@@ -51,7 +66,7 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
       ctx.session.promoCode = parameter.trim();
     }
 
-    await ctx.reply(welcomeMessage, {
+    await ctx.reply(ctx.t("welcome"), {
       parse_mode: "MarkdownV2",
       reply_markup: InlineKeyboard.from([langButtons])
     });

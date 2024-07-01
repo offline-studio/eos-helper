@@ -6,25 +6,6 @@ import EOSIOAbi from "./contracts/eosio.json";
 import { Session } from "@wharfkit/session"
 import { WalletPluginPrivateKey } from "@wharfkit/wallet-plugin-privatekey"
 
-const requestPublicKeyMessage = `Please enter a public key for your account\\.
-You can generate keypair by the offline webapp below:
-`;
-
-const openKeypairGeneratorButton = InlineKeyboard.webApp("Generate Keypair", "https://eos-keypair.pages.dev/");
-
-const confirmButton = InlineKeyboard.text("Create Account", "confirm");
-const cancelButton = InlineKeyboard.text("Cancel", "cancel");
-
-const publicKeyConfirmMessage = (pubkey: string) => `Create free account with public key: 
-  
-\`${pubkey}\`
-  
-Make sure you have backed up the corresponding private key\\.
-
-If you need to use other public keys, please enter directly\\.`
-
-const accountCreatedMessage = `Account created successfully\\. Please import your Private Key to an EOS wallet\\. Such as [TokenPocket](https://www.tokenpocket.pro/en/download/app)\\.`;
-
 export interface ClaimFreeAccountOptions {
   creator: string;
   chainId: string;
@@ -66,7 +47,10 @@ export class ClaimFreeAccount {
   }
 
   async start() {
-    await this.ctx.reply(requestPublicKeyMessage, {
+    const lang = await this.ctx.i18n.getLocale();
+    const openKeypairGeneratorButton = InlineKeyboard.webApp(this.ctx.t("generate_keypair"), `https://eos-keypair.pages.dev?lang=${lang}`);
+
+    await this.ctx.reply(this.ctx.t("request_pubkey"), {
       reply_markup: InlineKeyboard.from([[openKeypairGeneratorButton]]),
       parse_mode: "MarkdownV2",
     });
@@ -77,16 +61,16 @@ export class ClaimFreeAccount {
     const confirmedPublicKey = await this.confirmPublicKey(publicKey);
     
     if (!confirmedPublicKey) {
-      await this.ctx.reply("Account creation cancelled");
+      await this.ctx.reply(this.ctx.t("account_cancelled"));
       return;
     }
 
-    await this.ctx.reply("Creating account...");
+    await this.ctx.reply(this.ctx.t("account_creating"));
     const txid = await this.createAccount(confirmedPublicKey);
 
     console.log("txid", txid);
 
-    await this.ctx.reply(accountCreatedMessage, {
+    await this.ctx.reply(this.ctx.t("account_created"), {
       parse_mode: "MarkdownV2",
     });
   }
@@ -105,7 +89,7 @@ export class ClaimFreeAccount {
           return;
         }
 
-        await this.ctx.reply("Invalid public key");
+        await this.ctx.reply(this.ctx.t("invalid_pubkey"));
       }
     } while (true);
   }
@@ -115,7 +99,12 @@ export class ClaimFreeAccount {
   }
 
   async confirmPublicKey(publicKey: string): Promise<false | string> {
-    await this.ctx.reply(publicKeyConfirmMessage(publicKey), {
+    const confirmButton = InlineKeyboard.text(this.ctx.t("create_account"), "confirm");
+    const cancelButton = InlineKeyboard.text(this.ctx.t("cancel"), "cancel");
+
+    await this.ctx.reply(this.ctx.t("confirm_pubkey", {
+      pubkey: publicKey
+    }), {
       reply_markup: InlineKeyboard.from([[confirmButton], [cancelButton]]),
       parse_mode: "MarkdownV2",
     });
@@ -138,7 +127,7 @@ export class ClaimFreeAccount {
         if (this.isCommand(confirmedOrPublicKey)) {
           return false;
         }
-        await this.ctx.reply("Invalid public key, please enter again");
+        await this.ctx.reply(this.ctx.t("invalid_pubkey"));
       }
     } while (true);
   }
