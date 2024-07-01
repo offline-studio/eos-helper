@@ -38,6 +38,8 @@ class ClaimFreeAccount {
     });
 
     const publicKey = await this.waitPublicKey();
+    if (!publicKey) return;
+
     const confirmed = await this.confirmPublicKey(publicKey);
     
     if (!confirmed) {
@@ -54,15 +56,25 @@ class ClaimFreeAccount {
 
   async waitPublicKey() {
     do {
-    const publicKeyCtx = await this.conversation.wait();
+      const publicKeyCtx = await this.conversation.wait();
 
-    let publicKey = publicKeyCtx.message?.text;
-    if (publicKey && this.validatePublicKey(publicKey)) {
-      return publicKey;
-    }
+      let publicKey = publicKeyCtx.message?.text;
+      if (publicKey && this.validatePublicKey(publicKey)) {
+        return publicKey;
+      }
 
-    await this.ctx.reply("Invalid public key");
-  } while (true);
+      if (publicKey) {
+        if (this.isCommand(publicKey)) {
+          return;
+        }
+
+        await this.ctx.reply("Invalid public key");
+      }
+    } while (true);
+  }
+
+  isCommand(text: string) {
+    return text.startsWith("/");
   }
 
   async confirmPublicKey(publicKey: string): Promise<boolean> {
@@ -80,7 +92,12 @@ class ClaimFreeAccount {
         return await this.confirmPublicKey(confirmedOrPublicKey);
       }
 
-      await this.ctx.reply("Invalid public key, please enter again");
+      if (confirmedOrPublicKey) {
+        if (this.isCommand(confirmedOrPublicKey)) {
+          return false;
+        }
+        await this.ctx.reply("Invalid public key, please enter again");
+      }
     } while (true);
   }
 
