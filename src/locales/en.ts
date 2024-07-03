@@ -9,7 +9,9 @@ language_set = Language set to { $lang }
 
 request_pubkey = 
   Please enter a public key for your account\\.
-  You can generate keypair by the offline webapp below:
+  You can get your public key and key pair by clicking the button below:
+
+  Note: EOS public keys usually start with "EOS", for example: EOS7xC1\\.\\.\\.Gx6\\.
 
 generate_keypair = Generate Keypair
 

@@ -63,7 +63,7 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
         return;
       }
 
-      ctx.i18n.setLocale(value);
+      await ctx.i18n.setLocale(value);
       await ctx.answerCallbackQuery({ text: ctx.t("language_set", { lang: label }) });
       await ctx.editMessageText(ctx.t("welcome"), {
         parse_mode: "MarkdownV2",
@@ -81,6 +81,14 @@ export const createBot = (token: string, { botConfig, sessionStorage, ...claimFr
     if (typeof parameter === "string") {
       ctx.session.promoCode = parameter.trim();
     }
+
+    if (!ctx.session.__language_code) {
+      const languageCode = ctx.from?.language_code;
+      if (languageCode && languageCode.startsWith("zh")) {
+        await ctx.i18n.setLocale("zh");
+      }
+    }
+    
 
     await ctx.reply(ctx.t("welcome"), {
       parse_mode: "MarkdownV2",

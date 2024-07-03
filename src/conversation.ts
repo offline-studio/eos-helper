@@ -69,9 +69,10 @@ export class ClaimFreeAccount {
     const lang = ctx.session.__language_code;
 
     const openKeypairGeneratorButton = InlineKeyboard.webApp(ctx.t("generate_keypair"), `https://eos-keypair.pages.dev?lang=${lang}`);
+    const cancelButton = InlineKeyboard.text(ctx.t("cancel"), "cancel");
 
     await ctx.reply(ctx.t("request_pubkey"), {
-      reply_markup: InlineKeyboard.from([[openKeypairGeneratorButton]]),
+      reply_markup: InlineKeyboard.from([[openKeypairGeneratorButton], [cancelButton]]),
       parse_mode: "MarkdownV2",
     });
 
@@ -122,18 +123,22 @@ export class ClaimFreeAccount {
     do {
       const publicKeyCtx = await conversation.wait();
 
+      if (publicKeyCtx.update.callback_query?.data === "cancel") {
+        await ctx.reply(ctx.t("account_cancelled"));
+        return;
+      }
+
       let publicKey = publicKeyCtx.message?.text;
       if (publicKey && this.validatePublicKey(publicKey)) {
         return publicKey;
       }
 
-      if (publicKey) {
-        if (this.isCommand(publicKey)) {
-          return;
-        }
-
-        await ctx.reply(ctx.t("invalid_pubkey"));
+      if (!publicKey || this.isCommand(publicKey)) {
+        await ctx.reply(ctx.t("account_cancelled"));
+        return;
       }
+
+      await ctx.reply(ctx.t("invalid_pubkey"));
     } while (true);
   }
 

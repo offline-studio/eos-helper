@@ -9,7 +9,9 @@ language_set = 语言已切换至 { $lang }
 
 request_pubkey = 
   请为你的账号输入一个公钥。
-  你可以通过下面的离线网络程序生成密钥对：
+  你可以通过点击下列按钮获取你的公钥和密钥对：
+
+  注：EOS公钥通常以“EOS”开头，例如：EOS7xC1\\.\\.\\.Gx6\\.
 
 generate_keypair = 生成密钥对
 
